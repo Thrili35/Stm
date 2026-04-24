@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sangtam-English Neon Chatbot</title>
+    <style>
+        /* --- Base & Neon Styles --- */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #1a0b2e 0%, #050505 100%);
+        }
+
+        /* --- Chatbot Container --- */
+        .chat-container {
+            width: 400px;
+            max-width: 90vw;
+            height: 600px;
+            max-height: 90vh;
+            background: #0d0d0d;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff inset;
+            border: 2px solid #00ffff;
+            transition: all 0.3s ease;
+        }
+
+        .chat-container.minimized {
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .chat-container.closed {
+            display: none;
+        }
+
+        /* --- Header --- */
+        .chat-header {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 15px 20px;
+            border-bottom: 2px solid #00ffff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 13px;
+            border-top-right-radius: 13px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .chat-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #00ffff;
+        }
+
+        .chat-controls button {
+            background: none;
+            border: none;
+            color: #00ffff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-left: 10px;
+            text-shadow: 0 0 5px #00ffff;
+            transition: color 0.2s;
+        }
+
+        .chat-controls button:hover {
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+
+        /* --- Messages Area --- */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Custom Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: #111; 
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #00ffff; 
+            border-radius: 10px;
+            box-shadow: 0 0 5px #00ffff;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            color: #e0ffff;
+            border-bottom-left-radius: 2px;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: rgba(255, 0, 255, 0.1);
+            border: 1px solid #ff00ff;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+            color: #ffe0ff;
+            border-bottom-right-radius: 2px;
+        }
+
+        /* --- Input Area --- */
+        .chat-input-area {
+            padding: 15px;
+            border-top: 2px solid #00ffff;
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom-left-radius: 13px;
+            border-bottom-right-radius: 13px;
+        }
+
+        .chat-input-area input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #00ffff;
+            color: #fff;
+            padding: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .chat-input-area input:focus {
+            border-bottom: 1px solid #ff00ff;
+            box-shadow: 0 2px 5px -2px #ff00ff;
+        }
+
+        .chat-input-area button {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 10px #00ffff;
+            transition: all 0.3s;
+        }
+
+        .chat-input-area button:hover {
+            background: #ff00ff;
+            box-shadow: 0 0 15px #ff00ff;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <div class="chat-title">Sangtam Bot ⚡</div>
+            <div class="chat-controls">
+                <button onclick="toggleMinimize()" title="Minimize">_</button>
+                <button onclick="closeChat()" title="Close">X</button>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                Hello! I am your Sangtam-English translator. Ask me about months, days, seasons, or numbers!
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Type a word in English or Sangtam..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Sangtam Dictionary Data ---
+        // Using pairs of [English, Sangtam]. The bot will search both.
+        const dictionary = [
+            // Months
+            ["January", "Süpeh"], ["February", "Sehtpheh"], ["March", "Tsohsu"],
+            ["April", "Machi"], ["May", "Kisah"], ["June", "Matsekhyüm"],
+            ["July", "Chingmüdong"], ["August", "Hünapungbi"], ["September", "Mungmung"],
+            ["October", "Thsütitsümsüm"], ["November", "Chola"], ["December", "Chengyong"],
+            
+            // Weekdays
+            ["Sunday", "Mübünyü"], ["Monday", "Kuhdrangnyü"], ["Tuesday", "Khudinyü"],
+            ["Wednesday", "Müwanyü"], ["Thursday", "Müsütüpnyü"], ["Friday", "Kudingnyü"], ["Saturday", "Jangsika"],
+            
+            // Days/Nights
+            ["Today", "Chünye"], ["Tomorrow", "Atu"], ["Day after tomorrow", "Zitu"],
+            ["4th Day", "Zangtu"], ["5th Day", "Zinyu"], ["6th Day", "Zangnyu"], ["7th Day", "Anengmüli"],
+            ["Tonight", "Shomülang"], ["Last night", "Shomang"], ["Previous night", "Atüromang"],
+            ["4th Night", "Zitüromang / Zangturomang"], ["5th Night", "Zangtüromang / Zinyuromang"], 
+            ["6th Night", "Zinyüromang / Zangnyuromang"], ["7th Night", "Zangnyüromang"],
+            ["Yesterday", "Atü"], ["Day before Yesterday", "Zitü"], ["Tomorrow night", "Aturomang"],
+            
+            // Seasons
+            ["Spring Season", "Machi-mashü"], ["Spring", "Machi-mashü"],
+            ["Summer", "Müyü"], ["Autumn", "Maxa-maki"], ["Winter", "Tsingkang"],
+            
+            // Numbers 1-20 (You can easily add the rest following this pattern)
+            ["1", "Khe"], ["One", "Khe"], ["2", "Anyüh"], ["Two", "Anyüh"], 
+            ["3", "Asang"], ["Three", "Asang"], ["4", "Müyü"], ["Four", "Müyü"], 
+            ["5", "Münga"], ["Five", "Münga"], ["6", "Dhüroh"], ["Six", "Dhüroh"], 
+            ["7", "Dhünyeh"], ["Seven", "Dhünyeh"], ["8", "Keh"], ["Eight", "Keh"], 
+            ["9", "Dükuh"], ["Nine", "Dükuh"], ["10", "Dhüre"], ["Ten", "Dhüre"],
+            ["11", "Dhürekhe"], ["12", "Dhüreanyüh"], ["13", "Dhüreasang"], ["14", "Dhüremüyü"],
+            ["15", "Dhüremünga"], ["16", "Dhüredhüroh"], ["17", "Dhüredhünyeh"], ["18", "Dhürekeh"],
+            ["19", "Dhüredükuh"], ["20", "Mükyü"], ["30", "Sangre"], ["40", "Yüre"], 
+            ["50", "Dhünyang"], ["60", "Rohre"], ["70", "Nyühre"], ["80", "Qure"], 
+            ["90", "Gure"], ["100", "Thsihkhüdu"]
+        ];
+
+        // --- Core Chatbot Logic ---
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const message = inputField.value.trim();
+            if (message === '') return;
+
+            // 1. Add User Message to UI
+            appendMessage(message, 'user-message');
+            inputField.value = '';
+
+            // 2. Process Bot Response
+            setTimeout(() => {
+                const response = generateResponse(message);
+                appendMessage(response, 'bot-message');
+            }, 400); // slight delay for realism
+        }
+
+        function appendMessage(text, className) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            messageDiv.innerText = text;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function generateResponse(input) {
+            let foundTranslations = [];
+            
+            // Clean the input to ignore case and extra spaces
+            const cleanInput = input.toLowerCase();
+
+            // Iterate through dictionary using Regex to find matches within sentences
+            for (let i = 0; i < dictionary.length; i++) {
+                const engTerm = dictionary[i];
+                const sangTerm = dictionary[i];
+                
+                // Create a regex boundary to match exact words/phrases inside a sentence
+                const engRegex = new RegExp(`\\b${engTerm.toLowerCase()}\\b`, "i");
+                const sangRegex = new RegExp(`\\b${sangTerm.toLowerCase()}\\b`, "i");
+
+                if (engRegex.test(cleanInput)) {
+                    foundTranslations.push(`"${engTerm}" in Sangtam is "${sangTerm}".`);
+                } else if (sangRegex.test(cleanInput)) {
+                    foundTranslations.push(`"${sangTerm}" in English is "${engTerm}".`);
+                }
+            }
+
+            if (foundTranslations.length > 0) {
+                // If multiple matches are found, join them with a line break
+                return foundTranslations.join('\n');
+            } else {
+                return "I'm sorry, I don't have that word in my dictionary yet. Try asking about a month, day, or number!";
+            }
+        }
+
+        // --- Window Controls ---
+        
+        function toggleMinimize() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.classList.toggle('minimized');
+        }
+
+        function closeChat() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.classList.add('closed');
+            // Normally you'd have a way to reopen it, but per your prompt, 
+            // no floating button should exist, so it just stays closed.
+        }
+    </script>
+</body>
+</html>
